@@ -1,0 +1,72 @@
+{
+    "containerDefinitions": [
+      {
+        "name": "cloudwatch-agent",
+        "image": "amazon/cloudwatch-agent:latest",
+        "essential": true,
+        "memory": 128,
+        "cpu": 128,
+        "environment": [
+          {
+            "name": "AWS_REGION",
+            "value": "eu-central-1"
+          }
+        ],
+        "mountPoints": [
+          {
+            "sourceVolume": "cw-config",
+            "containerPath": "/etc/cwagentconfig"
+          }
+        ],
+        "command": [
+          "/opt/aws/amazon-cloudwatch-agent/bin/start-amazon-cloudwatch-agent",
+          "-config",
+          "/etc/cwagentconfig/cloudwatch-config.json"
+        ],
+        "volumesFrom": []
+      },
+      {
+        "name": "fluent-bit",
+        "image": "fluent/fluent-bit:latest",
+        "essential": true,
+        "memory": 128,
+        "cpu": 128,
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/fluent-bit",
+            "awslogs-region": "eu-central-1",
+            "awslogs-stream-prefix": "ecs"
+          }
+        },
+        "portMappings": [
+          {
+            "containerPort": 24224,
+            "hostPort": 24224
+          }
+        ],
+        "mountPoints": [
+          {
+            "sourceVolume": "fluent-bit-config",
+            "containerPath": "/fluent-bit/etc"
+          }
+        ],
+        "volumesFrom": []
+      }
+    ],
+    "volumes": [
+      {
+        "name": "cw-config",
+        "host": {
+          "sourcePath": "/path/to/cloudwatch-config"
+        }
+      },
+      {
+        "name": "fluent-bit-config",
+        "host": {
+          "sourcePath": "/path/to/fluent-bit.conf"
+        }
+      }
+    ]
+  }
+  

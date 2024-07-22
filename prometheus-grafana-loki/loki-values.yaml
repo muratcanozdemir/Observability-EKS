@@ -1,0 +1,90 @@
+loki:
+  config:
+    auth_enabled: false
+    server:
+      http_listen_port: 3100
+    common:
+      path_prefix: /var/loki
+      replication_factor: 1
+      storage:
+        filesystem:
+          chunks_directory: /var/loki/chunks
+          rules_directory: /var/loki/rules
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+    storage_config:
+      boltdb:
+        directory: /var/loki/index
+    chunk_store_config:
+      max_look_back_period: 0s
+    table_manager:
+      retention_deletes_enabled: false
+      retention_period: 0s
+    server:
+      http_lister_port: 3100
+    ingester:
+      lifecycler:
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+      chunk_idle_period: 5m
+      chunk_retain_period: 30s
+      max_transfer_retries: 0
+      wal:
+        enabled: true
+        dir: /var/loki/wal
+    limits_config:
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+    ruler:
+      alertmanager_url: http://alertmanager.monitoring.svc.cluster.local:9093
+      storage:
+        type: local
+        local:
+          directory: /var/loki/rules
+    distributor:
+      ring:
+        kvstore:
+          store: inmemory
+
+    # Remote write configuration
+    chunk_store_config:
+      chunk_cache_config:
+        memcached:
+          addresses: ""
+    storage_config:
+      aws:
+        s3: ${aws_s3_bucket.loki_archive.regional_bucket_domain_name}
+      boltdb_shipper:
+        active_index_directory: /var/loki/boltdb-shipper-active
+        shared_store: s3
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 168h
+    clients:
+      - url: https://${var.SPLUNK_URL}/services/collector
+        headers:
+          Authorization: "Splunk ${SPLUNK_HEC_TOKEN}"
+        external_labels:
+          source: loki
+      - url: "https://http-intake.logs.datadoghq.com/api/v2/logs"
+        headers:
+          DD-API-KEY:
+            name: remote-write-datadog
+            key: api_key
+        external_labels:
+          source: loki
+      - url: "https://{var.dynatrace_env_id}.live.dynatrace.com/api/v2/logs/ingest"
+        headers:
+          Authorization: "Api-Token ${var.dynatrace_token}"
+        external_labels:
+          source: loki

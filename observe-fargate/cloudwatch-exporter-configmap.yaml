@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudwatch-config
+  namespace: monitoring
+data:
+  cloudwatch-config.yml: |
+    region: us-west-2
+    metrics:
+      - aws_namespace: AWS/ECS
+        aws_metric_name: CPUUtilization
+        aws_dimensions: [ClusterName, ServiceName]
+        aws_statistics: [Average]
+      - aws_namespace: AWS/ECS
+        aws_metric_name: MemoryUtilization
+        aws_dimensions: [ClusterName, ServiceName]
+        aws_statistics: [Average]
+      - aws_namespace: AWS/RDS
+        aws_metric_name: CPUUtilization
+        aws_dimensions: [DBInstanceIdentifier]
+        aws_statistics: [Average]
+      - aws_namespace: AWS/RDS
+        aws_metric_name: DatabaseConnections
+        aws_dimensions: [DBInstanceIdentifier]
+        aws_statistics: [Average]
+      - aws_namespace: AWS/EFS
+        aws_metric_name: BurstCreditBalance
+        aws_dimensions: [FileSystemId]
+        aws_statistics: [Average]
+      - aws_namespace: AWS/EFS
+        aws_metric_name: DataReadIOBytes
+        aws_dimensions: [FileSystemId]
+        aws_statistics: [Sum]
+      - aws_namespace: AWS/EFS
+        aws_metric_name: DataWriteIOBytes
+        aws_dimensions: [FileSystemId]
+        aws_statistics: [Sum]
+      - aws_namespace: AWS/S3
+        aws_metric_name: NumberOfObjects
+        aws_dimensions: [BucketName, StorageType]
+        aws_statistics: [Average]
+      - aws_namespace: AWS/S3
+        aws_metric_name: BucketSizeBytes
+        aws_dimensions: [BucketName, StorageType]
+        aws_statistics: [Average]

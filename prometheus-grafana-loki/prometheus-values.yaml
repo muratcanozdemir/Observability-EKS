@@ -1,0 +1,72 @@
+prometheus:
+  service:
+    type: LoadBalancer
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      kubernetes.io/tls-acme: "true"
+    hosts:
+      - prometheus.${var.domain_name}
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - prometheus.${var.domain_name}
+
+alertmanager:
+  service:
+    type: LoadBalancer
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      kubernetes.io/tls-acme: "true"
+    hosts:
+      - alertmanager.example.com
+    tls:
+      - secretName: alertmanager-tls
+        hosts:
+          - alertmanager.example.com
+
+prometheus:
+  prometheusSpec:
+    remoteWrite:
+      - url: "https://remote-write-endpoint/api/v1/write"
+        authorization:
+          type: Bearer
+          credentials:
+            name: prometheus-remote-write-oauth-secret
+            key: token
+      - url: "https://${var.SPLUNK_URL}/services/collector"
+        headers:
+          Authorization: "Splunk ${var.splunk_token}"
+        queue_config:
+          capacity: 2500
+        write_relabel_configs:
+          - source_labels: [__name__]
+            regex: ".*"
+            action: keep
+      - url: "https://api.datadoghq.com/api/v1/series"
+        headers:
+          DD-API-KEY:
+            name: remote-write-datadog
+            key: api_key
+        queue_config:
+          capacity: 2500
+        write_relabel_configs:
+          - source_labels: [__name__]
+            regex: ".*"
+            action: keep
+      - url: "https://{var.dynatrace_env_id}.live.dynatrace.com/api/v2/metrics/ingest"
+        headers:
+          Authorization: "Api-Token ${var.dynatrace_token}"
+        queue_config:
+          capacity: 2500
+        write_relabel_configs:
+          - source_labels: [__name__]
+            regex: ".*"
+            action: keep
+  additionalScrapeConfigs:
+    - job_name: 'cloudwatch'
+      static_configs:
+        - targets: ['cloudwatch-exporter.monitoring.svc.cluster.local:9106']

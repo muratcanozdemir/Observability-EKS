@@ -1,0 +1,45 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.9.0
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: arn:aws:iam::${{secrets.ACCOUNT_ID}}:role/${{secrets.OIDC_ROLE}}
+        aws-region: ${{secrets.AWS_REGION}}
+
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
+      env:
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+        AZURE_AD_CLIENT_ID: ${{ secrets.AZURE_AD_CLIENT_ID }}
+        AZURE_AD_CLIENT_SECRET: ${{ secrets.AZURE_AD_CLIENT_SECRET }}
+        AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+        GRAFANA_ADMIN_USER: ${{ secrets.GRAFANA_ADMIN_USER }}
+        GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+        REMOTE_WRITE_URL: ${{ secrets.REMOTE_WRITE_URL }}
+        REMOTE_WRITE_PASSWORD: ${{ secrets.OAUTH_TOKEN }}
+        REMOTE_WRITE_BUCKET: ${{ secrets.REMOTE_WRITE_BUCKET }}
+        SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+        tf_var_SPLUNK_URL: ${{ secrets.SPLUNK_URL }}
+        DATADOG_API_KEY : ${{ secrets.DATADOG_API_KEY }}
+        DYNATRACE_API_TOKEN: ${{ secrets.DYNATRACE_API_TOKEN }}
+        DYNATRACE_ENV_ID: ${{ secrets.DYNATRACE_ENV_ID }}
