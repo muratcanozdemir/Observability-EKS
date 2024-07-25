@@ -1,0 +1,5 @@
+This repo deploys an EKS cluster.
+- Prometheus operator
+- Loki
+- Grafana
+- Observability for an ECS Fargate cluster, using Cloudwatch and exporting from there to our deployment using Fluentbit and Prometheus service discovery
